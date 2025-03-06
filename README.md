@@ -38,6 +38,20 @@ npm run docker:update
 
 Esto construirá la imagen Docker, creará y ejecutará el contenedor con la opción `--restart=always`, lo que garantiza que se inicie automáticamente cuando arranque el sistema.
 
+### Sistema de Caché
+
+El bot utiliza un sistema de caché para reducir las llamadas a las APIs y evitar alcanzar los límites de tasa:
+
+- **Caché de tweets**: Almacena los tweets obtenidos de cada usuario para usarlos en caso de error o límite de tasa.
+- **Caché de respuestas**: Almacena las respuestas generadas para evitar llamadas repetidas al modelo de lenguaje.
+- **Persistencia**: Los datos en caché se almacenan en el directorio `./cache` y persisten entre reinicios.
+
+Los tiempos de expiración predeterminados son:
+- Tweets: 1 hora
+- Respuestas generadas: 7 días
+
+La caché se limpia automáticamente de elementos expirados durante cada ejecución del bot.
+
 ### Actualización del código
 
 Cuando necesites actualizar el código:
@@ -71,6 +85,7 @@ Para facilitar la gestión de la aplicación, se han incluido varios scripts npm
 | `npm run docker:update` | Actualiza y reinicia el contenedor (ejecuta update.sh) |
 | `npm run docker:shell` | Abre una terminal dentro del contenedor |
 | `npm run docker:status` | Muestra el estado del contenedor |
+| `npm run docker:clean-cache` | Limpia manualmente la caché expirada |
 
 ### Comandos Docker directos
 

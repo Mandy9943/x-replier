@@ -8,6 +8,9 @@ COPY package*.json ./
 # Instalar dependencias
 RUN npm install
 
+# Crear directorio de caché
+RUN mkdir -p /app/cache
+
 # Copiar el código fuente
 COPY . .
 
