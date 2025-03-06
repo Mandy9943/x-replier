@@ -3,7 +3,18 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node index.js",
+    "dev": "node index.js",
+    "docker:build": "sudo docker build -t x-replier:latest .",
+    "docker:start": "sudo docker run -d --restart=always --name=x-replier --env-file .env -v $(pwd)/lastChecked.json:/app/lastChecked.json x-replier:latest",
+    "docker:stop": "sudo docker stop x-replier",
+    "docker:restart": "sudo docker restart x-replier",
+    "docker:logs": "sudo docker logs x-replier",
+    "docker:logs:follow": "sudo docker logs -f x-replier",
+    "docker:remove": "sudo docker stop x-replier || true && sudo docker rm x-replier || true",
+    "docker:update": "chmod +x ./update.sh && ./update.sh",
+    "docker:shell": "sudo docker exec -it x-replier /bin/bash",
+    "docker:status": "sudo docker ps -a | grep x-replier"
   },
   "keywords": [],
   "author": "",

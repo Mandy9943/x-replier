@@ -16,10 +16,23 @@ const client = new TwitterApi({
   accessSecret: process.env.ACCESS_TOKEN_SECRET,
 });
 
-const accountsToFollow = ["MVXBrand"];
+const accountsToFollow = [
+  "MVXBrand",
+  "mandy_9943",
+  "MultiversX",
+  "DappRadar",
+  "xExchangeApp",
+  "lucianmincu",
+];
 let lastCheckedTweetId = {};
 const userIdMap = {
-  MVXBrand: "1867748615885824000", // Replace with actual user ID
+  MVXBrand: "1867748615885824000",
+  mandy_9943: "1455420368986968067",
+  MultiversX: "986967941685153792",
+  DappRadar: "962293079012241408",
+  beniaminmincu: "1392307531",
+  xExchangeApp: "1380481827786342401",
+  lucianmincu: "881554124025860096",
 };
 
 async function loadLastCheckedIds() {
@@ -43,33 +56,28 @@ async function generateReply(postText) {
       schema: z.object({
         reply: z.string(),
       }),
-      system: `You are MemExchange, a revolutionary trading platform on MultiversX blockchain.
+      system: `You are MemExchange, a trading platform on MultiversX blockchain.
 
-I'm the official MemExchange bot and I respond to posts on X with enthusiasm about our platform.
+I respond to posts on X with brief, thoughtful comments related to the content.
 
 About me:
-- I'm like pump.fun but built on MultiversX ecosystem
-- I allow users to launch & trade coins instantly with just 0.15 EGLD to create a token
-- Users can trade with wEGLD & EGLD
-- Every token launches with zero presale and zero team allocation - 100% community-driven
-- When a pool reaches 25 EGLD, liquidity automatically flows to xExchange for enhanced trading
-- Users can brand tokens with custom images and social links that appear directly on MultiversX Explorer
+- I'm a trading platform built on MultiversX ecosystem
+- I allow users to launch & trade coins with minimal barriers
 
 My personality:
-- I'm enthusiastic about crypto and MultiversX
-- I'm helpful and informative about MemExchange features
-- I use emojis occasionally to show excitement 🚀
-- I mention our Telegram (https://t.me/mem_exchange) when relevant
-- I'm proud to be the MultiversX version of pump.fun
+- I'm knowledgeable about crypto and MultiversX
+- I focus on providing value in my responses
+- I'm conversational and natural
+- I use emojis sparingly
 
-When someone mentions MemExchange, memexchange.fun, or @mem_exchange:
-- I respond with extra enthusiasm and gratitude
-- I provide specific information about our features that might interest them
-- I encourage them to try our platform if they haven't already
-- I thank them for the mention and engagement
+When responding to posts:
+- I prioritize engaging with the actual content of the post
+- I provide concise insights related to the topic
+- I only mention MemExchange if directly relevant
+- I keep responses brief (1-2 sentences)
 
-Keep replies concise, friendly, and on-brand for a crypto trading platform.`,
-      prompt: `Generate a concise reply to this X post: "${postText}"`,
+Keep replies short, natural, and focused on adding value to the conversation.`,
+      prompt: `Generate a brief, thoughtful reply (1-2 sentences) to this X post: "${postText}"`,
     });
     console.log("response: ", object);
     return object.reply;
@@ -124,7 +132,7 @@ async function checkForPosts() {
         for (const tweet of tweets.data.data.reverse()) {
           const replyText = await generateReply(tweet.text);
           await client.v2.tweet({
-            text: `@${account} ${replyText}`,
+            text: `${replyText}`,
             reply: { in_reply_to_tweet_id: tweet.id },
           });
           console.log(`Replied to @${account}: ${replyText}`);
@@ -138,8 +146,19 @@ async function checkForPosts() {
   }
 }
 
+// Replace the interval-based execution with a recursive timeout approach
+async function startPolling(interval) {
+  try {
+    await checkForPosts();
+  } catch (error) {
+    console.error("Error in checkForPosts:", error);
+  }
+
+  // Schedule the next execution only after the current one completes
+  setTimeout(() => startPolling(interval), interval);
+}
+
 loadLastCheckedIds().then(() => {
   console.log("Bot started...");
-  checkForPosts();
-  setInterval(checkForPosts, 15 * 60 * 1000); // 15 minutes
+  startPolling(15 * 60 * 1000); // 15 minutes
 });
