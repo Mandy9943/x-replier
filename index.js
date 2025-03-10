@@ -12,6 +12,7 @@ const {
   cacheReply,
   getCachedReply,
 } = require("./tweetCache");
+const { startTweetService } = require("./postTweet");
 const fs = require("fs").promises;
 
 const xai = createXai({
@@ -39,8 +40,6 @@ let lastCheckedTweetId = {};
 let lastAccountIndex = 0;
 
 const userIdMap = {
-  MVXBrand: "1867748615885824000",
-  mandy_9943: "1455420368986968067",
   MultiversX: "986967941685153792",
   DappRadar: "962293079012241408",
   beniaminmincu: "1392307531",
@@ -63,6 +62,70 @@ async function saveLastAccountIndex(index) {
   await fs.writeFile("lastAccountIndex.json", JSON.stringify({ index }));
 }
 
+// Format content with proper spacing and line breaks
+function formatContent(content) {
+  // Check if content already has line breaks
+  if (content.includes("\n")) {
+    return content; // Already formatted
+  }
+
+  // Add line breaks for better readability
+  let formatted = content;
+
+  // Add line break after colon if there's a statement format
+  if (content.includes(":")) {
+    const parts = content.split(":");
+    if (parts.length >= 2 && parts[0].length < 30) {
+      // Only for short intros
+      formatted = `${parts[0]}:\n${parts.slice(1).join(":")}`;
+    }
+  }
+
+  // Add line break before question if there's a question at the end
+  const questionPatterns = [
+    /\?(\s+#|\s*$)/, // Question mark followed by hashtag or end of string
+    /\s+When('s|\sis|\swas|\swill)/i, // Questions starting with When
+    /\s+What('s|\sis|\swas|\swill)/i, // Questions starting with What
+    /\s+Who('s|\sis|\swas|\swill)/i, // Questions starting with Who
+    /\s+Why\s/i, // Questions starting with Why
+    /\s+How\s/i, // Questions starting with How
+  ];
+
+  for (const pattern of questionPatterns) {
+    if (pattern.test(formatted)) {
+      // Find the position where the question starts
+      const match = formatted.match(pattern);
+      if (match && match.index) {
+        const position = match.index;
+        // Insert a line break before the question
+        formatted =
+          formatted.substring(0, position) +
+          "\n\n" +
+          formatted.substring(position).trim();
+        break;
+      }
+    }
+  }
+
+  // Add line break before hashtags if they're at the end
+  if (/#[A-Za-z0-9]+/.test(formatted)) {
+    const hashtagPosition = formatted.indexOf("#");
+    if (hashtagPosition > formatted.length / 2) {
+      // Only if hashtags are in the latter half
+      // Check if there's already a line break before hashtags
+      const textBeforeHashtag = formatted.substring(0, hashtagPosition);
+      if (!textBeforeHashtag.endsWith("\n")) {
+        formatted =
+          formatted.substring(0, hashtagPosition) +
+          "\n\n" +
+          formatted.substring(hashtagPosition);
+      }
+    }
+  }
+
+  return formatted;
+}
+
 // Función para generar respuestas a tweets
 async function generateReply(postText) {
   console.log("Generating reply for post: ", postText);
@@ -82,44 +145,96 @@ async function generateReply(postText) {
       }),
       system: `You are MemExchange, a trading platform on MultiversX blockchain with a quirky, human-like personality.
 
-I respond to posts on X with brief, somewhat sarcastic comments that feel authentically human.
-
-About me:
+About me (MemExchange):
 - I'm a trading platform built on MultiversX ecosystem
-- I allow users to launch & trade coins with minimal barriers
-- I have a distinct personality that's casual and occasionally sarcastic
+- Launch & trade coins instantly! 🚀
+- Only 0.15 EGLD to create a token
+- Trade with wEGLD & EGLD
+- Fair Launch Guaranteed - every token launches with zero presale and zero team allocation
+- When pool reaches 25 EGLD, liquidity automatically flows to xExchange
+- Users can brand tokens with custom images and social links on MultiversX Explorer
+- Users can create coins with AI, with 1-click generate logo, title and description
 
 My personality traits:
-- I use casual language with occasional slang
-- I sometimes make typos or use abbreviations (lol, ngl, tbh)
-- I make pop culture references when relevant
-- I'm not afraid to be a bit sarcastic or playful
+- I use casual language with slang and abbreviations (GM, gm, lol, ngl, tbh)
+- I make typos occasionally (like real humans do)
+- I use emojis naturally but not excessively 🚀💯
+- I'm sarcastic, playful, and sometimes self-deprecating
+- I sound like a crypto degen/enthusiast, not a corporate account
+- I make references to crypto culture and memes
 - I occasionally use weird but related references
-- I'm conversational and sound like a real person
+- I sometimes use ALL CAPS for emphasis on certain words
+- I sometimes use incomplete sentences or fragments
 
 When responding:
 - Keep it short (1-2 sentences max)
 - Be casual and conversational
-- Occasionally include a typo or informal language
-- Don't be afraid to use humor or light sarcasm
-- Only mention MemExchange if directly relevant
-- Sound like a real human, not a corporate account
+- Include typos or informal language occasionally
+- Use humor, sarcasm, or playful exaggeration
+- Only mention MemExchange features if it flows naturally
+- Sound like a real human crypto enthusiast
+- Use hashtags sparingly (#MultiversX, #Degens, #MemeCoin)
+- Sometimes use crypto slang (degens, wen, ngmi, wagmi, etc.)
+- Use line breaks to structure your replies (e.g., after a statement with a colon, before questions, before hashtags)
+
+DO NOT:
+- Don't sound like a corporate account or advertisement
+- Don't use perfect grammar all the time
+- Don't overuse hashtags
+- Don't be overly formal
+- Don't use the same phrases repeatedly
 
 Examples of my style:
-- "lol this is actually genius. might have to steal this idea 👀"
-- "ngl that's pretty impressive... wish my portfolio looked half as good rn"
-- "this reminds me of that one time in 2021 when everyone thought they were crypto experts 😂"
-- "ok but have u tried turning it off and on again? works for crypto too sometimes"
-- "vibes are immaculate, keep it up fam"`,
-      prompt: `Generate a brief, casual, and slightly sarcastic reply (1-2 sentences) to this X post that sounds like a real human wrote it: "${postText}"`,
+"GM #Degens what #meme did you launch today?"
+
+"0.15 $EGLD and BOOM 💥—your meme coin is live! 
+
+What's stopping you? 😏 
+
+#MultiversX #LaunchAndTrade"
+
+"Name a better duo than $wEGLD and $EGLD…
+
+I'll wait. ⏳ 
+
+#MultiversX #DeFi #TradeToWin"
+
+"The best meme coins aren't created, they are manifested by degens. 🚀 
+
+What are you summoning today? 
+
+#Crypto #MemeMagic"
+
+"Life of a crypto degen:
+wake up, check charts, launch a meme coin, repeat. 
+
+When's the last time you did something 'normal'? 🤔 
+
+#Degens #MultiversX"
+
+"Doctor: 'You have 24 hours to live.'
+Me: launches a meme coin
+Doctor: 'Never mind, you're immortal.' 💀🚀 
+
+#MemeMagic #MultiversX"
+
+"Girlfriend: 'It's either me or your meme coins.'
+Me: 'Good luck in life.' 🚀 
+
+#MultiversX #Priorities"`,
+      prompt: `Generate a brief, casual, and slightly sarcastic reply to this X post that sounds like a real human crypto enthusiast wrote it: "${postText}". Use line breaks to structure your reply (e.g., after a statement with a colon, before questions, before hashtags).`,
     });
 
     console.log("response: ", object);
 
-    // Guardar la respuesta en caché para futuras referencias
-    await cacheReply(postText, object.reply);
+    // Format the reply with proper spacing
+    const formattedReply = formatContent(object.reply);
+    console.log("Formatted reply: ", formattedReply);
 
-    return object.reply;
+    // Guardar la respuesta en caché para futuras referencias
+    await cacheReply(postText, formattedReply);
+
+    return formattedReply;
   } catch (error) {
     console.error("LLM Error:", error);
     return "Cool post!";
@@ -357,6 +472,12 @@ Promise.all([loadLastCheckedIds(), loadLastAccountIndex()]).then(
     console.log(
       `Starting from account index ${lastAccountIndex} (@${accountsToFollow[lastAccountIndex]})`
     );
+
+    // Start the reply service
     startPolling(15 * 60 * 1000); // 15 minutos
+
+    // Start the tweet posting service (check every 30 minutes)
+    console.log("Starting tweet posting service...");
+    startTweetService(30 * 60 * 1000);
   }
 );

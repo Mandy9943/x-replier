@@ -1,6 +1,6 @@
 # X-Replier Bot
 
-Bot que responde automáticamente a tweets de cuentas específicas.
+Bot que responde automáticamente a tweets de cuentas específicas y publica tweets periódicamente con una personalidad de entusiasta de criptomonedas.
 
 ## Configuración Automática con Docker
 
@@ -44,13 +44,80 @@ El bot utiliza un sistema de caché para reducir las llamadas a las APIs y evita
 
 - **Caché de tweets**: Almacena los tweets obtenidos de cada usuario para usarlos en caso de error o límite de tasa.
 - **Caché de respuestas**: Almacena las respuestas generadas para evitar llamadas repetidas al modelo de lenguaje.
+- **Caché de tiempo de publicación**: Almacena la última vez que se publicó un tweet para mantener un horario de publicación.
 - **Persistencia**: Los datos en caché se almacenan en el directorio `./cache` y persisten entre reinicios.
 
 Los tiempos de expiración predeterminados son:
 - Tweets: 1 hora
 - Respuestas generadas: 7 días
+- Tiempo de publicación: Persistente
 
 La caché se limpia automáticamente de elementos expirados durante cada ejecución del bot.
+
+### Funcionalidades
+
+El bot tiene dos funcionalidades principales:
+
+#### 1. Respuesta a tweets
+
+Monitorea las cuentas especificadas y responde automáticamente a sus tweets nuevos con respuestas generadas por IA que mantienen una personalidad consistente de entusiasta de criptomonedas en el ecosistema MultiversX.
+
+#### 2. Publicación de tweets
+
+Publica tweets periódicamente (cada 4-8 horas, con variación aleatoria) sobre temas relacionados con el ecosistema MultiversX, meme coins y trading. Los tweets son generados por IA con la misma personalidad que las respuestas.
+
+### Personalidad del Bot
+
+El bot tiene una personalidad definida como MemExchange, una plataforma de trading en MultiversX:
+
+- Usa lenguaje casual con jerga y abreviaturas (GM, gm, lol, ngl, tbh)
+- Ocasionalmente incluye errores tipográficos intencionales para parecer más humano
+- Usa emojis de forma natural pero no excesiva
+- Tiene un tono sarcástico, juguetón y a veces autodespreciativo
+- Suena como un entusiasta de criptomonedas, no como una cuenta corporativa
+- Hace referencias a la cultura crypto y memes
+- Usa hashtags con moderación (#MultiversX, #Degens, #MemeCoin)
+- Ocasionalmente utiliza jerga crypto (degens, wen, ngmi, wagmi, etc.)
+- Utiliza saltos de línea para estructurar mejor los tweets y respuestas
+
+### Formato de Tweets y Respuestas
+
+El bot utiliza un formato especial para sus tweets y respuestas que mejora la legibilidad:
+
+- Añade saltos de línea después de frases que terminan con dos puntos
+- Separa las preguntas del texto principal con líneas en blanco
+- Coloca los hashtags en líneas separadas al final del tweet
+- Estructura diálogos y escenarios con formato adecuado
+
+Ejemplo de formato:
+```
+Life of a crypto degen:
+wake up, check charts, launch a meme coin, repeat. 
+
+When's the last time you did something 'normal'? 🤔 
+
+#Degens #MultiversX
+```
+
+### Temas de los Tweets
+
+Los tweets generados se centran en temas como:
+- Meme coins en MultiversX
+- Lanzamiento de tokens con 0.15 EGLD
+- Trading en xExchange
+- Crecimiento del ecosistema MultiversX
+- Lanzamientos justos de tokens
+- Vida de los "degens" crypto
+- Trading con wEGLD y EGLD
+- Cultura de meme coins
+- Personalización de tokens en MultiversX
+
+### Manejo de errores
+
+El bot incluye manejo robusto de errores para:
+- Límites de tasa (código 429): Implementa espera exponencial y reintentos.
+- Contenido duplicado (código 409): Genera nuevo contenido y reintenta.
+- Otros errores: Registra y continúa con la siguiente operación.
 
 ### Actualización del código
 

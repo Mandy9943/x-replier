@@ -14,6 +14,7 @@ mkdir -p ./cache
 sudo docker run -d --restart=always --name=x-replier \
   --env-file .env \
   -v "$(pwd)/lastChecked.json:/app/lastChecked.json" \
+  -v "$(pwd)/lastAccountIndex.json:/app/lastAccountIndex.json" \
   -v "$(pwd)/cache:/app/cache" \
   x-replier:latest
 
